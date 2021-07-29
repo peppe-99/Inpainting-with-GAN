@@ -2,15 +2,10 @@ from model.generator import Generator
 from model.discriminator import Discriminator
 from utils.parameters import *
 
-import os
 import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data
-import torchvision.datasets as dset
-import torchvision.transforms as transforms
 import torchvision.utils as vutils
-import matplotlib.pyplot as plt
-
 
 from utils.function import create_dir, ritagliare_centro, prepare_data
 
@@ -18,7 +13,7 @@ if __name__ == '__main__':
     create_dir(TRAIN_RESULT)
 
     # Otteniamo il dataloader per l'allenamento
-    dataloader = prepare_data("./dataset/resized/")
+    dataloader = prepare_data("./dataset/training/")
 
     # Instanziamo generatore, discriminatore, ottimizzatori e criterio per il calcolo della loss
     generator = Generator()
@@ -36,7 +31,6 @@ if __name__ == '__main__':
             create_dir(TRAIN_RESULT + "epoca_%03d/batch_%03d/reali" % (epoch + 1, i + 1))
             create_dir(TRAIN_RESULT + "epoca_%03d/batch_%03d/ritagliate" % (epoch + 1, i + 1))
             create_dir(TRAIN_RESULT + "epoca_%03d/batch_%03d/ricostruite" % (epoch + 1, i + 1))
-
 
             real_cpu, _ = data
             real_center_cpu = real_cpu[:, :, int(img_size / 4):int(img_size / 4) + int(img_size / 2),
@@ -100,9 +94,13 @@ if __name__ == '__main__':
             # Sostituiamo la parte mancante dell'immagine con quella generata del generatore e salviamo
             recon_image = input_cropped.clone()
             recon_image.data[:, :, int(img_size / 4):int(img_size / 4 + img_size / 2),
-                            int(img_size / 4):int(img_size / 4 + img_size / 2)] = fake.data
+            int(img_size / 4):int(img_size / 4 + img_size / 2)] = fake.data
 
             # Salviamo le immagini reali, ritagliate e generate
             vutils.save_image(real_cpu, TRAIN_RESULT + 'epoca_%03d/batch_%03d/reali.png' % (epoch + 1, i + 1))
             vutils.save_image(input_cropped, TRAIN_RESULT + 'epoca_%03d/batch_%03d/ritagliate.png' % (epoch + 1, i + 1))
             vutils.save_image(recon_image, TRAIN_RESULT + 'epoca_%03d/batch_%03d/ricostruite.png' % (epoch + 1, i + 1))
+
+    # Salviamo il modello allenato
+    torch.save(generator.state_dict(), "./log/generator.pt")
+    torch.save(discriminator.state_dict(), "./log/discriminator.pt")

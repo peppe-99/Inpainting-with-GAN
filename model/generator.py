@@ -86,7 +86,6 @@ class Generator(Module):
         self.cuda()
         self.to(device=device)
 
-
     def forward(self, x):
         x = self.t1(x)
         x = self.t2(x)

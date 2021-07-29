@@ -4,8 +4,7 @@ import torch
 import torchvision.transforms as transforms
 import torchvision.datasets as dset
 
-from utils.parameters import img_size, batch_size, TRAIN_RESULT
-import torchvision.utils as vutils
+from utils.parameters import img_size, batch_size
 
 
 def create_dir(path):
@@ -50,6 +49,3 @@ def prepare_data(dataset_path):
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=2)
 
     return dataloader
-
-
-# def save_batch(real_cpu, input_cropped, recon_image, batch, epoch):

@@ -14,6 +14,6 @@ label = torch.FloatTensor(batch_size, 1, 1, 1).cuda().to(device)              # 
 real_label = 1
 fake_label = 0
 
-TRAIN_RESULT = 'risultati/training/'
+TRAIN_RESULT = 'risultati/training/'    # Directory risultati training
 
 

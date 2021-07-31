@@ -1,3 +1,5 @@
+from torch.autograd import Variable
+
 from model.generator import Generator
 from model.discriminator import Discriminator
 from utils.parameters import *
@@ -7,7 +9,7 @@ import torch.optim as optim
 import torch.utils.data
 import torchvision.utils as vutils
 
-from utils.function import create_dir, ritagliare_centro, prepare_data
+from utils.function import create_dir, ritagliare_centro, prepare_data, create_graphic_loss_training
 
 if __name__ == '__main__':
     create_dir(TRAIN_RESULT)
@@ -23,6 +25,13 @@ if __name__ == '__main__':
     optimizerD = optim.Adam(discriminator.parameters(), lr=lr, betas=(0.5, 0.999))
     optimizerG = optim.Adam(generator.parameters(), lr=lr, betas=(0.5, 0.999))
 
+    file_log = open("./log/log_training.txt", "a")
+
+    input_real = Variable(input_real)
+    input_cropped = Variable(input_cropped)
+    real_center = Variable(real_center)
+    label = Variable(label)
+
     # Training
     for epoch in range(0, epochs):
         create_dir(TRAIN_RESULT + "epoca_%03d" % (epoch + 1))
@@ -36,10 +45,8 @@ if __name__ == '__main__':
             real_center_cpu = real_cpu[:, :, int(img_size / 4):int(img_size / 4) + int(img_size / 2),
                               int(img_size / 4):int(img_size / 4) + int(img_size / 2)]
             batch_size = real_cpu.size(0)
-            real_cpu = real_cpu.cuda()
-            real_center_cpu = real_center_cpu.cuda()
-            real_cpu.to(device)
-            real_center_cpu.to(device)
+            real_cpu = real_cpu.cuda().to(device)
+            real_center_cpu = real_center_cpu.cuda().to(device)
 
             # Individuiamo e ritagliamo il centro dell'immagine reale
             input_real, input_cropped, real_center = ritagliare_centro(input_real, input_cropped, real_cpu, real_center,
@@ -57,7 +64,7 @@ if __name__ == '__main__':
 
             # Allenaimo il discriminatore con immagini generati del generatore
             fake = generator(input_cropped)
-            fake.cuda()
+            fake.cuda().to(device)
             label.data.fill_(fake_label)
             output = discriminator(fake.detach())
             errD_fake = criterion(output, label)
@@ -75,7 +82,7 @@ if __name__ == '__main__':
 
             wtl2Matrix = real_center.clone()
             wtl2Matrix.data.fill_(0.999 * 10)
-            wtl2Matrix.data[:, :, 0: int(img_size / 2), 0: int(img_size / 2)] = 0.999
+            wtl2Matrix.data[:, :, 4: int(img_size / 2 - 4), 4: int(img_size / 2 - 4)] = 0.999
 
             errG_l2 = (fake - real_center).pow(2)
             errG_l2 = errG_l2 * wtl2Matrix
@@ -85,11 +92,8 @@ if __name__ == '__main__':
 
             errG.backward()
 
-            D_G_z2 = output.data.mean()
+            D_G_z2 = output.mean().item()
             optimizerG.step()
-
-            print('Epoca: [%d / %d] batch: [%d / %d]\nPerdita discriminatore: %.4f Perdità generatore: %.4f\n'
-                  % (epoch + 1, epochs, i + 1, len(dataloader), errD.data, errG))
 
             # Sostituiamo la parte mancante dell'immagine con quella generata del generatore e salviamo
             recon_image = input_cropped.clone()
@@ -101,6 +105,22 @@ if __name__ == '__main__':
             vutils.save_image(input_cropped, TRAIN_RESULT + 'epoca_%03d/batch_%03d/ritagliate.png' % (epoch + 1, i + 1))
             vutils.save_image(recon_image, TRAIN_RESULT + 'epoca_%03d/batch_%03d/ricostruite.png' % (epoch + 1, i + 1))
 
+            # Stampiamo e saliamo i log
+            print(f'Epoca: [{epoch + 1}/{epochs}] Batch: [{i + 1}/{len(dataloader)}]\n'
+                  f'Loss discriminatore: %.4f Loss generatore: %.4f\n'
+                  f'D(x): %.4f \t D(G(z)): %.4f / %.4f\n' % (errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
+
+            file_log.write(f'Epoca: [{epoch + 1}/{epochs}] Batch: [{i + 1}/{len(dataloader)}]\n'
+                           f'Loss discriminatore: %.4f Loss generatore: %.4f\n'
+                           f'D(x): %.4f \t D(G(z)): %.4f / %.4f\n' % (errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
+
+            losses_discriminatore.append(errG.item())
+            losses_generatore.append(errD.item())
+
+    file_log.close()
+
     # Salviamo il modello allenato
     torch.save(generator.state_dict(), "./log/generator.pt")
     torch.save(discriminator.state_dict(), "./log/discriminator.pt")
+
+    create_graphic_loss_training(losses_generatore, losses_discriminatore)

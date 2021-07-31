@@ -3,6 +3,7 @@ import os
 import torch
 import torchvision.transforms as transforms
 import torchvision.datasets as dset
+from matplotlib import pyplot as plt
 
 from utils.parameters import img_size, batch_size
 
@@ -46,6 +47,22 @@ def prepare_data(dataset_path):
                                     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
     dataset = dset.ImageFolder(root=dataset_path, transform=transform)
     assert dataset
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=2)
+    if dataset_path.endswith('testing/'):
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=2)
+    else:
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=2)
 
     return dataloader
+
+
+def create_graphic_loss_training(G_losses, D_losses):
+    plt.figure(figsize=(20, 10))
+    plt.title("Generator and Discriminator Loss During Training")
+    plt.plot(G_losses, label="G")
+    plt.plot(D_losses, label="D")
+    plt.xlabel("iterations")
+    plt.ylabel("Loss")
+    plt.legend()
+    fig = plt.gcf()
+    plt.show()
+    fig.savefig('./log/losses_training.png')

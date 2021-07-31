@@ -17,11 +17,10 @@ fake_label = 0
 losses_discriminatore = []
 losses_generatore = []
 
-real_scores = []
-fake_scores = []
+ricostruzione = []
 
 TRAIN_RESULT = 'risultati/training/'    # Directory risultati training
-TEST_RESULT = 'risultati/testing'       # Directory risultati testing
+TEST_RESULT = 'risultati/testing/'       # Directory risultati testing
 
 """
     x rappresenta un immagine di dimensione 3 x 64 x 64

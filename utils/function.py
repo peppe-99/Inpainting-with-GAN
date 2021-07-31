@@ -48,7 +48,7 @@ def prepare_data(dataset_path):
     dataset = dset.ImageFolder(root=dataset_path, transform=transform)
     assert dataset
     if dataset_path.endswith('testing/'):
-        dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=2)
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=False, num_workers=2)
     else:
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=2)
 
@@ -57,12 +57,21 @@ def prepare_data(dataset_path):
 
 def create_graphic_loss_training(G_losses, D_losses):
     plt.figure(figsize=(20, 10))
-    plt.title("Generator and Discriminator Loss During Training")
-    plt.plot(G_losses, label="G")
-    plt.plot(D_losses, label="D")
-    plt.xlabel("iterations")
-    plt.ylabel("Loss")
+    plt.title("Perdità di Generatore e Discriminatore Durante il Training")
+    plt.plot(G_losses, label="Generatore")
+    plt.plot(D_losses, label="Discriminatore")
+    plt.xlabel("Batch")
+    plt.ylabel("Accuratezza")
     plt.legend()
     fig = plt.gcf()
-    plt.show()
     fig.savefig('./log/losses_training.png')
+
+
+def create_graphic_accuratezza(perdita_ricostruzione):
+    plt.figure(figsize=(20, 10))
+    plt.title("Perdità ricostruzione delle immagini")
+    plt.plot(perdita_ricostruzione)
+    plt.xlabel("Batch")
+    plt.ylabel("Perdita")
+    fig = plt.gcf()
+    fig.savefig('./log/perdita_ricostruzione_testing.png')

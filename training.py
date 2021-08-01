@@ -9,7 +9,7 @@ import torch.optim as optim
 import torch.utils.data
 import torchvision.utils as vutils
 
-from utils.function import create_dir, ritagliare_centro, prepare_data, create_graphic_loss_training
+from utils.function import create_dir, ritagliare_centro, prepare_data, create_graphic_training
 
 if __name__ == '__main__':
     create_dir(TRAIN_RESULT)
@@ -123,4 +123,4 @@ if __name__ == '__main__':
     torch.save(generator.state_dict(), "./log/generator.pt")
     torch.save(discriminator.state_dict(), "./log/discriminator.pt")
 
-    create_graphic_loss_training(losses_generatore, losses_discriminatore)
+    create_graphic_training(losses_generatore, losses_discriminatore)

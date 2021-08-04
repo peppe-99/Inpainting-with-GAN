@@ -16,6 +16,8 @@ fake_label = 0
 
 losses_discriminatore = []
 losses_generatore = []
+losses_reconstruction = []
+losses_adversarial = []
 
 ricostruzione = []
 

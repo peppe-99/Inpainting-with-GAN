@@ -40,7 +40,7 @@ def ritagliare_centro(input_real, input_cropped, real_cpu, real_center, real_cen
         return input_real, input_cropped, real_center
 
 
-def prepare_data(dataset_path):
+def  prepare_data(dataset_path):
     transform = transforms.Compose([transforms.Resize(img_size),
                                     transforms.CenterCrop(img_size),
                                     transforms.ToTensor(),
@@ -55,19 +55,31 @@ def prepare_data(dataset_path):
     return dataloader
 
 
-def create_graphic_loss_training(G_losses, D_losses):
+def make_graphic_loss_G(losses_reconstruction, losses_adversarial):
+    plt.figure(figsize=(20, 10))
+    plt.title("Perdità del Generatore durante il Training")
+    plt.plot(losses_reconstruction, label="Loss Reconstruction")
+    plt.plot(losses_adversarial, label="Adversarial Loss")
+    plt.xlabel("Batch analizzati")
+    plt.ylabel("Loss")
+    plt.legend()
+    fig = plt.gcf()
+    fig.savefig('./log/losses_generatore.png')
+
+
+def create_graphic_training(G_losses, D_losses):
     plt.figure(figsize=(20, 10))
     plt.title("Perdità di Generatore e Discriminatore Durante il Training")
-    plt.plot(G_losses, label="Generatore")
     plt.plot(D_losses, label="Discriminatore")
-    plt.xlabel("Batch")
-    plt.ylabel("Accuratezza")
+    plt.plot(G_losses, label="Generatore")
+    plt.xlabel("Batch analizzati")
+    plt.ylabel("Loss")
     plt.legend()
     fig = plt.gcf()
     fig.savefig('./log/losses_training.png')
 
 
-def create_graphic_accuratezza(perdita_ricostruzione):
+def create_graphic_testing(perdita_ricostruzione):
     plt.figure(figsize=(20, 10))
     plt.title("Perdità ricostruzione delle immagini")
     plt.plot(perdita_ricostruzione)

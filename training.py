@@ -9,7 +9,7 @@ import torch.optim as optim
 import torch.utils.data
 import torchvision.utils as vutils
 
-from utils.function import create_dir, ritagliare_centro, prepare_data, create_graphic_training
+from utils.function import create_dir, ritagliare_centro, prepare_data, create_graphic_training, make_graphic_loss_G
 
 if __name__ == '__main__':
     create_dir(TRAIN_RESULT)
@@ -25,8 +25,6 @@ if __name__ == '__main__':
     optimizerD = optim.Adam(discriminator.parameters(), lr=lr, betas=(0.5, 0.999))
     optimizerG = optim.Adam(generator.parameters(), lr=lr, betas=(0.5, 0.999))
 
-    file_log = open("./log/log_training.txt", "a")
-
     input_real = Variable(input_real)
     input_cropped = Variable(input_cropped)
     real_center = Variable(real_center)
@@ -34,12 +32,12 @@ if __name__ == '__main__':
 
     # Training
     for epoch in range(0, epochs):
+        file_log = open("./log/log_training.txt", "a")
+
         create_dir(TRAIN_RESULT + "epoca_%03d" % (epoch + 1))
 
         for i, data in enumerate(dataloader, 0):
-            create_dir(TRAIN_RESULT + "epoca_%03d/batch_%03d/reali" % (epoch + 1, i + 1))
-            create_dir(TRAIN_RESULT + "epoca_%03d/batch_%03d/ritagliate" % (epoch + 1, i + 1))
-            create_dir(TRAIN_RESULT + "epoca_%03d/batch_%03d/ricostruite" % (epoch + 1, i + 1))
+            create_dir(TRAIN_RESULT + "epoca_%03d/batch_%03d" % (epoch + 1, i + 1))
 
             real_cpu, _ = data
             real_center_cpu = real_cpu[:, :, int(img_size / 4):int(img_size / 4) + int(img_size / 2),
@@ -60,7 +58,7 @@ if __name__ == '__main__':
             output = discriminator(real_center)
             errD_real = criterion(output, label)
             errD_real.backward()
-            D_x = output.data.mean()
+            D_x = output.mean().item()
 
             # Allenaimo il discriminatore con immagini generati del generatore
             fake = generator(input_cropped)
@@ -69,7 +67,7 @@ if __name__ == '__main__':
             output = discriminator(fake.detach())
             errD_fake = criterion(output, label)
             errD_fake.backward()
-            D_G_z1 = output.data.mean()
+            D_G_z1 = output.mean().item()
             errD = errD_real + errD_fake
             optimizerD.step()
 
@@ -78,17 +76,17 @@ if __name__ == '__main__':
             generator.zero_grad()
             label.data.fill_(real_label)  # fake labels are real for generator cost
             output = discriminator(fake)
-            errG_D = criterion(output, label)
+            loss_adv = criterion(output, label)
 
+            # Calcoliamo la loss recostruction
             wtl2Matrix = real_center.clone()
             wtl2Matrix.data.fill_(0.999 * 10)
             wtl2Matrix.data[:, :, 4: int(img_size / 2 - 4), 4: int(img_size / 2 - 4)] = 0.999
+            loss_rec = (fake - real_center).pow(2)
+            loss_rec = loss_rec * wtl2Matrix
+            loss_rec = loss_rec.mean()
 
-            errG_l2 = (fake - real_center).pow(2)
-            errG_l2 = errG_l2 * wtl2Matrix
-            errG_l2 = errG_l2.mean()
-
-            errG = (1 - 0.999) * errG_D + 0.999 * errG_l2
+            errG = (1 - 0.999) * loss_adv + 0.999 * loss_rec
 
             errG.backward()
 
@@ -106,21 +104,25 @@ if __name__ == '__main__':
             vutils.save_image(recon_image, TRAIN_RESULT + 'epoca_%03d/batch_%03d/ricostruite.png' % (epoch + 1, i + 1))
 
             # Stampiamo e saliamo i log
-            print(f'Epoca: [{epoch + 1}/{epochs}] Batch: [{i + 1}/{len(dataloader)}]\n'
-                  f'Loss discriminatore: %.4f Loss generatore: %.4f\n'
-                  f'D(x): %.4f \t D(G(z)): %.4f / %.4f\n' % (errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
+            print(f'Epoca: [{epoch + 1}/{epochs}] Batch: [{i + 1}/{len(dataloader)}] '
+                  f'Loss_D: %.4f Loss_G: %.4f [Loss_rec: %.4f | Loss_adv: %.4f]'
+                  % (errD.mean().item(), errG.mean().item(), loss_rec.mean().item(), loss_adv.mean().item()))
 
-            file_log.write(f'Epoca: [{epoch + 1}/{epochs}] Batch: [{i + 1}/{len(dataloader)}]\n'
-                           f'Loss discriminatore: %.4f Loss generatore: %.4f\n'
-                           f'D(x): %.4f \t D(G(z)): %.4f / %.4f\n' % (errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
+            file_log.write(f'Epoca: [{epoch + 1}/{epochs}] Batch: [{i + 1}/{len(dataloader)}] '
+                           f'Loss_D: %.4f Loss_G: %.4f [Loss_rec: %.4f | Loss_adv: %.4f] '
+                           f'D(x): %.4f D(G(z)): %.4f / %.4f\n'
+                           % (errD.item(), errG.item(), loss_rec.item(), loss_adv.item(), D_x, D_G_z1, D_G_z2))
 
-            losses_discriminatore.append(errG.item())
-            losses_generatore.append(errD.item())
+            losses_reconstruction.append(round(loss_rec.mean().item(), 4))
+            losses_adversarial.append(round(loss_adv.mean().item(), 4))
+            losses_generatore.append(round(errG.mean().item(), 4))
+            losses_discriminatore.append(round(errD.mean().item(), 4))
 
-    file_log.close()
+        file_log.close()
 
     # Salviamo il modello allenato
     torch.save(generator.state_dict(), "./log/generator.pt")
     torch.save(discriminator.state_dict(), "./log/discriminator.pt")
 
+    make_graphic_loss_G(losses_reconstruction, losses_adversarial)
     create_graphic_training(losses_generatore, losses_discriminatore)

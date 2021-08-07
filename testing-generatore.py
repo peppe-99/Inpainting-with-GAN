@@ -71,4 +71,4 @@ for data in dataloader:
                           TEST_RESULT + f"ricostruite_{num_img}.png")
 
 
-create_graphic_testing(ricostruzione)
+# create_graphic_testing(ricostruzione)

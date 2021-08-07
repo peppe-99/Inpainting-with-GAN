@@ -24,10 +24,9 @@ discriminator.eval()
 
 dataloader = prepare_data("./dataset/testing/")
 
-batch_attuale = 1
 num_img = 0
 
-for data in tqdm(dataloader, ncols=100, desc="Batch analizzati"):
+for data in dataloader:
     real_cpu, _ = data
     real_center_cpu = real_cpu[:, :, int(img_size / 4):int(img_size / 4) + int(img_size / 2),
                       int(img_size / 4):int(img_size / 4) + int(img_size / 2)]
@@ -45,22 +44,31 @@ for data in tqdm(dataloader, ncols=100, desc="Batch analizzati"):
 
     recon_image = input_cropped.clone()
     recon_image.data[:, :, int(img_size / 4):int(img_size / 4 + img_size / 2),
-    int(img_size / 4):int(img_size / 4 + img_size / 2)] = fake.data
+                        int(img_size / 4):int(img_size / 4 + img_size / 2)] = fake.data
+    """
+        wtl2Matrix = real_center.clone()
+        wtl2Matrix.data.fill_(0.999 * 10)
+        wtl2Matrix.data[:, :, 4: int(img_size / 2 - 4), 4: int(img_size / 2 - 4)] = 0.999
+        loss_rec = (fake - real_center).pow(2)
+        loss_rec = loss_rec * wtl2Matrix
+        loss_rec = loss_rec.mean()
+        
+        ricostruzione.append(loss_rec.item())
+    """
+    """
+        label.resize_((batch_size, 1, 1, 1)).fill_(real_label)
+    
+        output = discriminator(fake)
+        loss_rec = criterion(output, label)
+        ricostruzione.append(loss_rec.item())
+    """
 
-    label.resize_((batch_size, 1, 1, 1)).fill_(real_label)
-
-    output = discriminator(fake)
-    errore_ricostruzione = criterion(output, label)
-    ricostruzione.append(errore_ricostruzione.item())
+    # print(f"Immagine {num_img} \t perdita {loss_rec.item()}")
 
     for i in range(0, batch_size):
         num_img += 1
         vutils.save_image([input_real[i], input_cropped[i], recon_image[i]],
                           TEST_RESULT + f"ricostruite_{num_img}.png")
-
-    # vutils.save_image(recon_image, TEST_RESULT + f"/ricostruite_testing_{i}.png")
-
-    batch_attuale += 1
 
 
 create_graphic_testing(ricostruzione)

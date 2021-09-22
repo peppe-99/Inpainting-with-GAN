@@ -48,7 +48,7 @@ def  prepare_data(dataset_path):
     dataset = dset.ImageFolder(root=dataset_path, transform=transform)
     assert dataset
     if dataset_path.endswith('testing/'):
-        dataloader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=False, num_workers=2)
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=2)
     else:
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=2)
 
@@ -56,7 +56,7 @@ def  prepare_data(dataset_path):
 
 
 def make_graphic_loss_G(losses_reconstruction, losses_adversarial):
-    plt.figure(figsize=(20, 10))
+    plt.figure()
     plt.title("Perdità del Generatore durante il Training")
     plt.plot(losses_reconstruction, label="Loss Reconstruction")
     plt.plot(losses_adversarial, label="Adversarial Loss")
@@ -68,7 +68,7 @@ def make_graphic_loss_G(losses_reconstruction, losses_adversarial):
 
 
 def create_graphic_training(G_losses, D_losses):
-    plt.figure(figsize=(20, 10))
+    plt.figure()
     plt.title("Perdità di Generatore e Discriminatore Durante il Training")
     plt.plot(D_losses, label="Discriminatore")
     plt.plot(G_losses, label="Generatore")
@@ -80,10 +80,10 @@ def create_graphic_training(G_losses, D_losses):
 
 
 def create_graphic_testing(perdita_ricostruzione):
-    plt.figure(figsize=(20, 10))
-    plt.title("Perdità ricostruzione delle immagini")
+    plt.figure()
+    plt.title("Accuratezza del generatore")
     plt.plot(perdita_ricostruzione)
-    plt.xlabel("Batch")
-    plt.ylabel("Perdita")
+    plt.xlabel("Accuratezza")
+    plt.ylabel("Immagini analizzate")
     fig = plt.gcf()
     fig.savefig('./log/perdita_ricostruzione_testing.png')

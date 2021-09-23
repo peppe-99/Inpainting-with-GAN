@@ -21,8 +21,8 @@ losses_adversarial = []
 
 ricostruzione = []
 
-TRAIN_RESULT = 'risultati/training/'    # Directory risultati training
-TEST_RESULT = 'risultati/testing/'       # Directory risultati testing
+TRAIN_RESULT = 'result/training/'    # Directory risultati training
+TEST_RESULT = 'result/testing/'      # Directory risultati testing
 
 """
     x rappresenta un immagine di dimensione 3 x 64 x 64
